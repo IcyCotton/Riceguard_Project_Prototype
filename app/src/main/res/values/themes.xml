@@ -1,0 +1,3 @@
+<resources>
+    <style name="Theme.Riceguard_Project_Prototype" parent="android:style/Theme.DeviceDefault.NoActionBar" />
+</resources>
