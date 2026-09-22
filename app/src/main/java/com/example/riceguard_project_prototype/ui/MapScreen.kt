@@ -14,6 +14,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.riceguard_project_prototype.ui.theme.TextDarkPrimary
+import com.example.riceguard_project_prototype.ui.theme.TextDarkSecondary
+import com.example.riceguard_project_prototype.ui.theme.TextLightPrimary
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -21,7 +24,7 @@ fun MapScreen() {
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Rice Field Risk Map", fontWeight = FontWeight.Bold, color = Color.White) },
+                title = { Text("Rice Field Risk Map", fontWeight = FontWeight.Bold, color = TextLightPrimary) },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = Color(0xFF1D5C3A))
             )
         }
@@ -57,12 +60,13 @@ fun MapScreen() {
                             text = "Interactive Regional Farm Map",
                             fontWeight = FontWeight.Bold,
                             fontSize = 18.sp,
-                            color = Color(0xFF1D5C3A)
+                            color = TextDarkPrimary
                         )
                         Text(
                             text = "Lat: 15.4827° N, Lon: 120.9692° E",
                             fontSize = 13.sp,
-                            color = Color(0xFF2E7D32)
+                            fontWeight = FontWeight.SemiBold,
+                            color = Color(0xFF1B5E20)
                         )
                     }
                 }
@@ -97,12 +101,13 @@ fun MapScreen() {
                             text = "Nueva Ecija Sector 4 - Moderate Risk",
                             fontWeight = FontWeight.Bold,
                             fontSize = 15.sp,
-                            color = Color(0xFF1D5C3A)
+                            color = TextDarkPrimary
                         )
                         Text(
                             text = "Brown Spot report logged 2km away from your farm.",
                             fontSize = 13.sp,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                            fontWeight = FontWeight.Medium,
+                            color = TextDarkSecondary
                         )
                     }
                 }

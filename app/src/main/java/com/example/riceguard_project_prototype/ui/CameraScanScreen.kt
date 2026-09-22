@@ -45,6 +45,7 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.example.riceguard_project_prototype.ui.theme.Riceguard_Project_PrototypeTheme
+import com.example.riceguard_project_prototype.ui.theme.TextLightPrimary
 import kotlin.random.Random
 
 @Composable
@@ -124,7 +125,7 @@ fun CameraScanScreen(
                 ) {
                     Text(
                         text = "Align Rice Leaf Here",
-                        color = Color.White,
+                        color = TextLightPrimary,
                         fontSize = 16.sp,
                         fontWeight = FontWeight.Bold,
                         modifier = Modifier.padding(horizontal = 20.dp, vertical = 10.dp)
@@ -151,7 +152,10 @@ fun CameraScanScreen(
                     // Back Button
                     Button(
                         onClick = onBackClick,
-                        colors = ButtonDefaults.buttonColors(containerColor = Color.Black.copy(alpha = 0.5f)),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color.Black.copy(alpha = 0.5f),
+                            contentColor = TextLightPrimary
+                        ),
                         shape = RoundedCornerShape(50),
                         contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
                     ) {
@@ -159,16 +163,19 @@ fun CameraScanScreen(
                             Icon(
                                 imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
                                 contentDescription = "Back",
-                                tint = Color.White
+                                tint = TextLightPrimary
                             )
-                            Text("Back", color = Color.White, fontWeight = FontWeight.Bold)
+                            Text("Back", color = TextLightPrimary, fontWeight = FontWeight.Bold)
                         }
                     }
 
                     // Flash Button
                     Button(
                         onClick = { isFlashOn = !isFlashOn },
-                        colors = ButtonDefaults.buttonColors(containerColor = Color.Black.copy(alpha = 0.5f)),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color.Black.copy(alpha = 0.5f),
+                            contentColor = TextLightPrimary
+                        ),
                         shape = RoundedCornerShape(50),
                         contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
                     ) {
@@ -176,9 +183,9 @@ fun CameraScanScreen(
                             Icon(
                                 imageVector = if (isFlashOn) Icons.Filled.FlashOn else Icons.Filled.FlashOff,
                                 contentDescription = "Flash",
-                                tint = Color.White
+                                tint = TextLightPrimary
                             )
-                            Text(if (isFlashOn) "Flash On" else "Flash Off", color = Color.White, fontWeight = FontWeight.Bold)
+                            Text(if (isFlashOn) "Flash On" else "Flash Off", color = TextLightPrimary, fontWeight = FontWeight.Bold)
                         }
                     }
                 }
@@ -209,8 +216,9 @@ fun CameraScanScreen(
                             )
                             Text(
                                 text = "Hold steady in good lighting",
-                                color = Color.White,
-                                fontSize = 14.sp
+                                color = TextLightPrimary,
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.Medium
                             )
                         }
                     }
@@ -219,7 +227,7 @@ fun CameraScanScreen(
                 // Bottom Panel matching the mockup
                 Surface(
                     modifier = Modifier.fillMaxWidth(),
-                    color = Color(0xFFF4F9F5), // Light greenish theme bottom panel
+                    color = Color(0xFFF4F9F5),
                     shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp)
                 ) {
                     Row(
@@ -237,9 +245,13 @@ fun CameraScanScreen(
                             shape = RoundedCornerShape(12.dp),
                             modifier = Modifier.height(48.dp)
                         ) {
-                            Icon(imageVector = Icons.Filled.PhotoLibrary, contentDescription = "Gallery")
+                            Icon(
+                                imageVector = Icons.Filled.PhotoLibrary,
+                                contentDescription = "Gallery",
+                                tint = Color(0xFF1D5C3A)
+                            )
                             Spacer(modifier = Modifier.width(6.dp))
-                            Text("Upload from Gallery", fontWeight = FontWeight.Bold)
+                            Text("Upload from Gallery", color = Color(0xFF1D5C3A), fontWeight = FontWeight.Bold)
                         }
 
                         // Shutter Button
@@ -248,7 +260,7 @@ fun CameraScanScreen(
                                 .size(72.dp)
                                 .border(4.dp, Color(0xFF1D5C3A), CircleShape)
                                 .padding(6.dp)
-                                .background(Color(0xFFD32F2F), CircleShape) // Vibrant Red Capture Button
+                                .background(Color(0xFFD32F2F), CircleShape)
                                 .clickable {
                                     val choice = Random.nextInt(4)
                                     when (choice) {
@@ -266,12 +278,15 @@ fun CameraScanScreen(
             // Permission denied UI
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                    Text("Camera permission is required to scan rice leaves", color = Color.White, textAlign = TextAlign.Center)
+                    Text("Camera permission is required to scan rice leaves", color = TextLightPrimary, textAlign = TextAlign.Center)
                     Button(
                         onClick = { permissionLauncher.launch(Manifest.permission.CAMERA) },
-                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1D5C3A))
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color(0xFF1D5C3A),
+                            contentColor = TextLightPrimary
+                        )
                     ) {
-                        Text("Grant Permission")
+                        Text("Grant Permission", color = TextLightPrimary, fontWeight = FontWeight.Bold)
                     }
                 }
             }

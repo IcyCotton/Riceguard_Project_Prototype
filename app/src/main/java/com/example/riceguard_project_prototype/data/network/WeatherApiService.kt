@@ -1,19 +1,19 @@
 package com.example.riceguard_project_prototype.data.network
 
-import com.example.riceguard_project_prototype.data.model.WeatherResponse
+import com.example.riceguard_project_prototype.data.model.OpenMeteoResponse
 import retrofit2.http.GET
 import retrofit2.http.Query
 
 interface WeatherApiService {
-    @GET("weather")
+    @GET("v1/forecast")
     suspend fun getCurrentWeather(
-        @Query("lat") lat: Double,
-        @Query("lon") lon: Double,
-        @Query("appid") apiKey: String,
-        @Query("units") units: String = "metric"
-    ): WeatherResponse
+        @Query("latitude") latitude: Double,
+        @Query("longitude") longitude: Double,
+        @Query("current") current: String = "temperature_2m,relative_humidity_2m,wind_speed_10m",
+        @Query("wind_speed_unit") windSpeedUnit: String = "ms"
+    ): OpenMeteoResponse
 
     companion object {
-        const val BASE_URL = "https://api.openweathermap.org/data/2.5/"
+        const val BASE_URL = "https://api.open-meteo.com/"
     }
 }

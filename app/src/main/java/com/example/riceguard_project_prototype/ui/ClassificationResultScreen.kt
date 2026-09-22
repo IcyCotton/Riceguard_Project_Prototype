@@ -23,6 +23,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.riceguard_project_prototype.ml.CNNInferenceEngine
 import com.example.riceguard_project_prototype.ui.theme.Riceguard_Project_PrototypeTheme
+import com.example.riceguard_project_prototype.ui.theme.TextDarkPrimary
+import com.example.riceguard_project_prototype.ui.theme.TextDarkSecondary
+import com.example.riceguard_project_prototype.ui.theme.TextLightPrimary
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -37,7 +40,6 @@ fun ClassificationResultScreen(
     val context = LocalContext.current
     val inferenceEngine = remember { CNNInferenceEngine(context) }
 
-    // Recreate a dummy 224x224 bitmap with the passed average color to feed the engine deterministically
     val bitmap = remember(avgR, avgG, avgB) {
         val bmp = Bitmap.createBitmap(224, 224, Bitmap.Config.ARGB_8888)
         bmp.eraseColor(android.graphics.Color.rgb(avgR, avgG, avgB))
@@ -53,16 +55,16 @@ fun ClassificationResultScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Diagnosis Result", fontWeight = FontWeight.Bold) },
+                title = { Text("Diagnosis Result", fontWeight = FontWeight.Bold, color = TextLightPrimary) },
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
-                        Icon(imageVector = Icons.Default.ArrowBack, contentDescription = "Back")
+                        Icon(imageVector = Icons.Default.ArrowBack, contentDescription = "Back", tint = TextLightPrimary)
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = Color(0xFF1D5C3A),
-                    titleContentColor = Color.White,
-                    navigationIconContentColor = Color.White
+                    titleContentColor = TextLightPrimary,
+                    navigationIconContentColor = TextLightPrimary
                 ),
                 modifier = Modifier.statusBarsPadding()
             )
@@ -94,21 +96,21 @@ fun ClassificationResultScreen(
                             text = if (isFromGallery) "Gallery Upload Analysis" else "Real-time Scan Diagnosis",
                             fontSize = 12.sp,
                             fontWeight = FontWeight.Bold,
-                            color = Color.Gray
+                            color = TextDarkSecondary
                         )
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(
                             text = topResult?.className ?: "Analyzing...",
                             fontSize = 28.sp,
                             fontWeight = FontWeight.ExtraBold,
-                            color = if (topResult?.className == "Healthy") Color(0xFF2E7D32) else Color(0xFFC62828)
+                            color = if (topResult?.className == "Healthy") Color(0xFF1B5E20) else Color(0xFFB71C1C)
                         )
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
                             text = "Confidence: ${String.format("%.1f%%", (topResult?.confidence ?: 0f) * 100)}",
                             fontSize = 16.sp,
-                            fontWeight = FontWeight.Medium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                            fontWeight = FontWeight.SemiBold,
+                            color = TextDarkPrimary
                         )
                     }
                 }
@@ -144,8 +146,9 @@ fun ClassificationResultScreen(
                         ) {
                             Text(
                                 text = result.className,
-                                fontWeight = FontWeight.SemiBold,
-                                fontSize = 15.sp
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 15.sp,
+                                color = TextDarkPrimary
                             )
                             Text(
                                 text = String.format("%.2f%%", result.confidence * 100),
@@ -177,11 +180,14 @@ fun ClassificationResultScreen(
                         .fillMaxWidth()
                         .height(56.dp),
                     shape = RoundedCornerShape(16.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1D5C3A))
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFF1D5C3A),
+                        contentColor = TextLightPrimary
+                    )
                 ) {
-                    Icon(imageVector = Icons.Default.Refresh, contentDescription = "Refresh")
+                    Icon(imageVector = Icons.Default.Refresh, contentDescription = "Refresh", tint = TextLightPrimary)
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text("Scan Another Leaf", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                    Text("Scan Another Leaf", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = TextLightPrimary)
                 }
             }
         }

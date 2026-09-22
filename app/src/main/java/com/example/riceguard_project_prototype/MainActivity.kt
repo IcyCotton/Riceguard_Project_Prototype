@@ -4,6 +4,12 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
@@ -151,7 +157,15 @@ class MainActivity : ComponentActivity() {
                         onBack = { navigator.goBack() },
                         modifier = Modifier
                             .fillMaxSize()
-                            .padding(innerPadding)
+                            .padding(innerPadding),
+                        transitionSpec = {
+                            (fadeIn(animationSpec = tween(350)) + scaleIn(animationSpec = tween(350), initialScale = 0.96f)) togetherWith
+                                    (fadeOut(animationSpec = tween(350)) + scaleOut(animationSpec = tween(350), targetScale = 0.96f))
+                        },
+                        popTransitionSpec = {
+                            (fadeIn(animationSpec = tween(350)) + scaleIn(animationSpec = tween(350), initialScale = 0.96f)) togetherWith
+                                    (fadeOut(animationSpec = tween(350)) + scaleOut(animationSpec = tween(350), targetScale = 0.96f))
+                        }
                     )
                 }
             }

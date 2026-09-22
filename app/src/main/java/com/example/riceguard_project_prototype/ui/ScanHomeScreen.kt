@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CameraAlt
+import androidx.compose.material.icons.filled.Dashboard
 import androidx.compose.material.icons.filled.PhotoLibrary
 import androidx.compose.material.icons.rounded.CheckCircle
 import androidx.compose.material.icons.rounded.Eco
@@ -17,10 +18,13 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.material.icons.filled.Dashboard
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.riceguard_project_prototype.ui.theme.Riceguard_Project_PrototypeTheme
+import com.example.riceguard_project_prototype.ui.theme.TextDarkPrimary
+import com.example.riceguard_project_prototype.ui.theme.TextDarkSecondary
+import com.example.riceguard_project_prototype.ui.theme.TextLightPrimary
+import com.example.riceguard_project_prototype.ui.theme.TextLightSecondary
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -38,12 +42,12 @@ fun ScanHomeScreen(
                             text = "Scan Rice Leaf",
                             fontWeight = FontWeight.Bold,
                             fontSize = 24.sp,
-                            color = Color.White
+                            color = TextLightPrimary
                         )
                         Text(
                             text = "AI will detect disease from your photo",
                             fontSize = 14.sp,
-                            color = Color.White.copy(alpha = 0.8f)
+                            color = TextLightSecondary
                         )
                     }
                 },
@@ -52,12 +56,12 @@ fun ScanHomeScreen(
                         Icon(
                             imageVector = Icons.Filled.Dashboard,
                             contentDescription = "Dashboard",
-                            tint = Color.White
+                            tint = TextLightPrimary
                         )
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Color(0xFF1D5C3A) // Deep green container background matching the mockup
+                    containerColor = Color(0xFF1D5C3A)
                 ),
                 modifier = Modifier.statusBarsPadding()
             )
@@ -66,7 +70,7 @@ fun ScanHomeScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .background(Color(0xFFF4F9F5)) // Vibrant light greenish background
+                .background(Color(0xFFF4F9F5))
                 .padding(innerPadding)
                 .padding(20.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
@@ -96,7 +100,7 @@ fun ScanHomeScreen(
                     Spacer(modifier = Modifier.height(16.dp))
                     Text(
                         text = "Take or upload a photo of\na rice leaf to begin",
-                        color = Color.White,
+                        color = TextLightPrimary,
                         fontSize = 18.sp,
                         fontWeight = FontWeight.Medium,
                         textAlign = TextAlign.Center,
@@ -109,7 +113,7 @@ fun ScanHomeScreen(
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(20.dp),
-                colors = CardDefaults.cardColors(containerColor = Color(0xFFFCF9F2)), // Warm cream tip background
+                colors = CardDefaults.cardColors(containerColor = Color(0xFFFCF9F2)),
                 border = BorderStroke(1.dp, Color(0xFFE8E1D5))
             ) {
                 Column(
@@ -120,7 +124,7 @@ fun ScanHomeScreen(
                         text = "📌 Tips for best results:",
                         fontWeight = FontWeight.Bold,
                         fontSize = 15.sp,
-                        color = Color(0xFF5C4033)
+                        color = TextDarkPrimary
                     )
                     val tips = listOf(
                         "Capture the whole leaf clearly",
@@ -142,7 +146,8 @@ fun ScanHomeScreen(
                             Text(
                                 text = tip,
                                 fontSize = 14.sp,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                fontWeight = FontWeight.Medium,
+                                color = TextDarkSecondary
                             )
                         }
                     }
@@ -158,20 +163,31 @@ fun ScanHomeScreen(
                     .fillMaxWidth()
                     .height(56.dp),
                 shape = RoundedCornerShape(16.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1D5C3A))
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color(0xFF1D5C3A),
+                    contentColor = TextLightPrimary
+                )
             ) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    Icon(imageVector = Icons.Filled.CameraAlt, contentDescription = "Camera")
-                    Text("Take Photo with Camera", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                    Icon(
+                        imageVector = Icons.Filled.CameraAlt,
+                        contentDescription = "Camera",
+                        tint = TextLightPrimary
+                    )
+                    Text(
+                        text = "Take Photo with Camera",
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = TextLightPrimary
+                    )
                 }
             }
 
             OutlinedButton(
                 onClick = { 
-                    // Simulate selecting a diseased leaf from gallery (avgR=150, avgG=120, avgB=60 -> brown spot)
                     onUploadFromGalleryClick(150, 120, 60)
                 },
                 modifier = Modifier
@@ -179,14 +195,25 @@ fun ScanHomeScreen(
                     .height(56.dp),
                 shape = RoundedCornerShape(16.dp),
                 border = BorderStroke(1.5.dp, Color(0xFF1D5C3A)),
-                colors = ButtonDefaults.outlinedButtonColors(contentColor = Color(0xFF1D5C3A))
+                colors = ButtonDefaults.outlinedButtonColors(
+                    contentColor = Color(0xFF1D5C3A)
+                )
             ) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    Icon(imageVector = Icons.Filled.PhotoLibrary, contentDescription = "Gallery")
-                    Text("Upload from Gallery", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                    Icon(
+                        imageVector = Icons.Filled.PhotoLibrary,
+                        contentDescription = "Gallery",
+                        tint = Color(0xFF1D5C3A)
+                    )
+                    Text(
+                        text = "Upload from Gallery",
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFF1D5C3A)
+                    )
                 }
             }
 
@@ -204,7 +231,8 @@ fun ScanHomeScreen(
                 Text(
                     text = "Powered by on-device CNN (TFLite) · Works offline",
                     fontSize = 12.sp,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+                    fontWeight = FontWeight.Medium,
+                    color = TextDarkSecondary
                 )
             }
         }

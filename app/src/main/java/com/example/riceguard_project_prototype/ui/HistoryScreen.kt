@@ -16,6 +16,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.riceguard_project_prototype.ui.theme.TextDarkPrimary
+import com.example.riceguard_project_prototype.ui.theme.TextDarkSecondary
+import com.example.riceguard_project_prototype.ui.theme.TextLightPrimary
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -41,7 +44,7 @@ fun HistoryScreen() {
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Diagnosis History", fontWeight = FontWeight.Bold, color = Color.White) },
+                title = { Text("Diagnosis History", fontWeight = FontWeight.Bold, color = TextLightPrimary) },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = Color(0xFF1D5C3A))
             )
         }
@@ -113,19 +116,20 @@ fun HistoryCard(item: DiagnosisHistoryItem) {
                         text = item.diseaseName,
                         fontWeight = FontWeight.Bold,
                         fontSize = 16.sp,
-                        color = Color(0xFF1D5C3A)
+                        color = TextDarkPrimary
                     )
                     Text(
                         text = dateStr,
                         fontSize = 12.sp,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        fontWeight = FontWeight.Medium,
+                        color = TextDarkSecondary
                     )
                 }
             }
 
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Surface(
-                    color = item.statusColor.copy(alpha = 0.1f),
+                    color = item.statusColor.copy(alpha = 0.15f),
                     shape = RoundedCornerShape(20.dp)
                 ) {
                     Text(
@@ -140,7 +144,7 @@ fun HistoryCard(item: DiagnosisHistoryItem) {
                 Icon(
                     imageVector = Icons.Default.ChevronRight,
                     contentDescription = "Details",
-                    tint = Color.Gray
+                    tint = TextDarkSecondary
                 )
             }
         }

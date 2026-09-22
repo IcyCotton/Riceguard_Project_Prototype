@@ -16,6 +16,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.riceguard_project_prototype.ui.theme.TextDarkPrimary
+import com.example.riceguard_project_prototype.ui.theme.TextDarkSecondary
+import com.example.riceguard_project_prototype.ui.theme.TextLightPrimary
 
 data class ShopProduct(
     val id: Int,
@@ -37,7 +40,7 @@ fun ShopScreen() {
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Agri Shop & Treatments", fontWeight = FontWeight.Bold, color = Color.White) },
+                title = { Text("Agri Shop & Treatments", fontWeight = FontWeight.Bold, color = TextLightPrimary) },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = Color(0xFF1D5C3A))
             )
         }
@@ -106,19 +109,23 @@ fun ProductCard(product: ShopProduct) {
                         text = product.name,
                         fontWeight = FontWeight.Bold,
                         fontSize = 15.sp,
-                        color = Color(0xFF1D5C3A)
+                        color = TextDarkPrimary
                     )
                     Text(
                         text = product.category,
                         fontSize = 12.sp,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        fontWeight = FontWeight.Medium,
+                        color = TextDarkSecondary
                     )
                 }
             }
 
             Button(
                 onClick = {},
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1D5C3A)),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color(0xFF1D5C3A),
+                    contentColor = TextLightPrimary
+                ),
                 contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp),
                 shape = RoundedCornerShape(10.dp)
             ) {
@@ -129,9 +136,10 @@ fun ProductCard(product: ShopProduct) {
                     Icon(
                         imageVector = Icons.Default.ShoppingCart,
                         contentDescription = "Buy",
+                        tint = TextLightPrimary,
                         modifier = Modifier.size(16.dp)
                     )
-                    Text(text = product.price, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                    Text(text = product.price, fontSize = 12.sp, fontWeight = FontWeight.Bold, color = TextLightPrimary)
                 }
             }
         }
