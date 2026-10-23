@@ -4,6 +4,7 @@ import android.graphics.Bitmap
 import android.graphics.Color
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.example.riceguard_project_prototype.data.dataset.DatasetManager
 import org.junit.Assert.*
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -58,5 +59,28 @@ class RiceGuardMLTest {
         assertNotNull(buffer)
         // 224 * 224 * 3 (RGB) = 150528 bytes
         assertEquals(224 * 224 * 3, buffer.capacity())
+    }
+
+    @Test
+    fun testDatasetManagerMetadataAndSamples() {
+        val appContext = InstrumentationRegistry.getInstrumentation().targetContext
+        val datasetManager = DatasetManager(appContext)
+
+        val metadata = datasetManager.getDatasetMetadata()
+        assertNotNull("Dataset metadata should not be null", metadata)
+        assertEquals("Rice Leaf Disease Combined Dataset", metadata?.datasetName)
+        assertEquals(6588, metadata?.totalImages)
+        assertEquals(5, metadata?.categories?.size)
+
+        val samples = datasetManager.getAllSampleItems()
+        assertFalse("Dataset sample items should not be empty", samples.isEmpty())
+        assertTrue("At least 25 samples should be loaded across 5 categories", samples.size >= 25)
+
+        // Verify sample bitmap classification with CNNInferenceEngine
+        val engine = CNNInferenceEngine(appContext)
+        val sampleItem = samples.first()
+        val classificationResults = engine.classifyLeaf(sampleItem.bitmap)
+        assertNotNull(classificationResults)
+        assertTrue(classificationResults.isNotEmpty())
     }
 }

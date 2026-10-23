@@ -7,19 +7,23 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.Dashboard
+import androidx.compose.material.icons.filled.FolderZip
 import androidx.compose.material.icons.filled.PhotoLibrary
 import androidx.compose.material.icons.rounded.CheckCircle
 import androidx.compose.material.icons.rounded.Eco
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.riceguard_project_prototype.data.dataset.DatasetManager
 import com.example.riceguard_project_prototype.ui.theme.Riceguard_Project_PrototypeTheme
 import com.example.riceguard_project_prototype.ui.theme.TextDarkPrimary
 import com.example.riceguard_project_prototype.ui.theme.TextDarkSecondary
@@ -33,6 +37,10 @@ fun ScanHomeScreen(
     onUploadFromGalleryClick: (avgR: Int, avgG: Int, avgB: Int) -> Unit,
     onDashboardClick: () -> Unit
 ) {
+    val context = LocalContext.current
+    val datasetManager = remember { DatasetManager(context) }
+    val metadata = remember { datasetManager.getDatasetMetadata() }
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -80,24 +88,24 @@ fun ScanHomeScreen(
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(220.dp),
+                    .height(200.dp),
                 shape = RoundedCornerShape(24.dp),
                 colors = CardDefaults.cardColors(containerColor = Color(0xFF1D5C3A))
             ) {
                 Column(
                     modifier = Modifier
                         .fillMaxSize()
-                        .padding(24.dp),
+                        .padding(20.dp),
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.Center
                 ) {
                     Icon(
                         imageVector = Icons.Rounded.Eco,
                         contentDescription = "Leaf Icon",
-                        modifier = Modifier.size(64.dp),
+                        modifier = Modifier.size(56.dp),
                         tint = Color(0xFF81C784)
                     )
-                    Spacer(modifier = Modifier.height(16.dp))
+                    Spacer(modifier = Modifier.height(12.dp))
                     Text(
                         text = "Take or upload a photo of\na rice leaf to begin",
                         color = TextLightPrimary,
@@ -106,6 +114,42 @@ fun ScanHomeScreen(
                         textAlign = TextAlign.Center,
                         lineHeight = 24.sp
                     )
+                }
+            }
+
+            // Dataset Metadata Badge Card
+            if (metadata != null) {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(containerColor = Color(0xFFE8F5E9)),
+                    border = BorderStroke(1.dp, Color(0xFFA5D6A7))
+                ) {
+                    Row(
+                        modifier = Modifier.padding(14.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.FolderZip,
+                            contentDescription = "Dataset Loaded",
+                            tint = Color(0xFF1B5E20),
+                            modifier = Modifier.size(28.dp)
+                        )
+                        Column {
+                            Text(
+                                text = "Dataset Integrated: ${metadata.datasetName}",
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 14.sp,
+                                color = TextDarkPrimary
+                            )
+                            Text(
+                                text = "${metadata.totalImages} images across ${metadata.categories.size} categories loaded",
+                                fontSize = 12.sp,
+                                color = TextDarkSecondary
+                            )
+                        }
+                    }
                 }
             }
 
@@ -188,7 +232,29 @@ fun ScanHomeScreen(
 
             OutlinedButton(
                 onClick = { 
-                    onUploadFromGalleryClick(150, 120, 60)
+                    // Select a real dataset sample image from dataset
+                    val sample = datasetManager.getRandomSampleItem()
+                    if (sample != null) {
+                        val bitmap = sample.bitmap
+                        var totalR = 0L
+                        var totalG = 0L
+                        var totalB = 0L
+                        val sampleSize = 100
+                        for (i in 0 until sampleSize) {
+                            val x = (i * 17) % bitmap.width
+                            val y = (i * 23) % bitmap.height
+                            val pixel = bitmap.getPixel(x, y)
+                            totalR += (pixel shr 16) and 0xFF
+                            totalG += (pixel shr 8) and 0xFF
+                            totalB += pixel and 0xFF
+                        }
+                        val avgR = (totalR / sampleSize).toInt()
+                        val avgG = (totalG / sampleSize).toInt()
+                        val avgB = (totalB / sampleSize).toInt()
+                        onUploadFromGalleryClick(avgR, avgG, avgB)
+                    } else {
+                        onUploadFromGalleryClick(150, 120, 60)
+                    }
                 },
                 modifier = Modifier
                     .fillMaxWidth()
@@ -209,7 +275,7 @@ fun ScanHomeScreen(
                         tint = Color(0xFF1D5C3A)
                     )
                     Text(
-                        text = "Upload from Gallery",
+                        text = "Upload Dataset Sample",
                         fontSize = 16.sp,
                         fontWeight = FontWeight.Bold,
                         color = Color(0xFF1D5C3A)
@@ -229,7 +295,7 @@ fun ScanHomeScreen(
                         .background(Color(0xFF81C784), RoundedCornerShape(50))
                 )
                 Text(
-                    text = "Powered by on-device CNN (TFLite) · Works offline",
+                    text = "Powered by Combined Dataset & CNN · Works offline",
                     fontSize = 12.sp,
                     fontWeight = FontWeight.Medium,
                     color = TextDarkSecondary

@@ -1,0 +1,43 @@
+{
+  "dataset_name": "Rice Leaf Disease Combined Dataset",
+  "version": "1.0",
+  "total_images": 6588,
+  "description": "Multi-source dataset containing rice leaf images categorized into 5 disease/condition classes.",
+  "classes": [
+    {
+      "id": "Bacterial_Blight",
+      "display_name": "Bacterial Blight",
+      "image_count": 1401,
+      "description": "Caused by Xanthomonas oryzae, leading to wilting of seedlings and yellowing/drying of leaves.",
+      "sample_folder": "dataset/sample_images/Bacterial_Blight"
+    },
+    {
+      "id": "Blast",
+      "display_name": "Leaf Blast",
+      "image_count": 1697,
+      "description": "Caused by the fungus Magnaporthe oryzae, producing diamond-shaped lesions on leaves.",
+      "sample_folder": "dataset/sample_images/Blast"
+    },
+    {
+      "id": "Brown_Spot",
+      "display_name": "Brown Spot",
+      "image_count": 1284,
+      "description": "Fungal disease caused by Bipolaris oryzae, producing brown oval spots on leaves.",
+      "sample_folder": "dataset/sample_images/Brown_Spot"
+    },
+    {
+      "id": "Healthy",
+      "display_name": "Healthy Leaf",
+      "image_count": 1286,
+      "description": "Healthy rice leaf foliage showing vibrant green coloration with no visible lesions.",
+      "sample_folder": "dataset/sample_images/Healthy"
+    },
+    {
+      "id": "Tungro",
+      "display_name": "Rice Tungro Virus",
+      "image_count": 920,
+      "description": "Viral disease transmitted by green leafhoppers, causing stunting and yellow-orange leaf discoloration.",
+      "sample_folder": "dataset/sample_images/Tungro"
+    }
+  ]
+}
