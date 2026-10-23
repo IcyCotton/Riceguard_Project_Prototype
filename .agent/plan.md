@@ -1,4 +1,4 @@
-# Project Plan
+w# Project Plan
 
 A clean, high-contrast mobile dashboard UI for an Android agricultural application called 'RiceGuard' optimized for low-end smartphones. Top header shows app title and current location badge (Davao, Philippines). Main section features a prominent Weather Widget showing temperature (28°C), humidity, and disease risk alert for farmers. Center section features a large, easy-to-tap primary CTA button labeled 'Scan Rice Leaf' with a camera icon. Below it, add two quick-access card buttons for 'Diagnosis History' and 'Geographic Disease Map'. Bottom section shows a concise 'Recent Activity Summary' card with the last scanned disease result. Use an eco-friendly green and crisp off-white color palette with minimal shadows and high readability.
 
