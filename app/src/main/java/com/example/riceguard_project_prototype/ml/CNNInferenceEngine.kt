@@ -36,10 +36,10 @@ class CNNInferenceEngine(private val context: Context) {
             val startOffset = assetFileDescriptor.startOffset
             val declaredLength = assetFileDescriptor.declaredLength
             val modelBuffer = fileChannel.map(FileChannel.MapMode.READ_ONLY, startOffset, declaredLength)
-            
+
             // In a production environment with a valid weights file, we would initialize the Interpreter:
             // interpreter = Interpreter(modelBuffer)
-            
+
             Log.d("CNNInferenceEngine", "TFLite model 'riceguard_quantized.tflite' loaded successfully from assets.")
             isModelLoaded = true
         } catch (e: IOException) {
@@ -70,7 +70,7 @@ class CNNInferenceEngine(private val context: Context) {
         var totalG = 0L
         var totalB = 0L
         val sampleSize = 100
-        
+
         // Sample some pixels to make the classification deterministic and responsive to the image content
         for (i in 0 until sampleSize) {
             val x = (i * 17) % width
