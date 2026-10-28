@@ -2,11 +2,15 @@ package com.example.riceguard_project_prototype.ui
 
 import android.Manifest
 import android.content.pm.PackageManager
+import android.graphics.Bitmap
+import android.net.Uri
 import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageCapture
+import androidx.camera.core.ImageCaptureException
+import androidx.camera.core.ImageProxy
 import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
@@ -46,13 +50,14 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.example.riceguard_project_prototype.ui.theme.Riceguard_Project_PrototypeTheme
 import com.example.riceguard_project_prototype.ui.theme.TextLightPrimary
-import kotlin.random.Random
+import java.io.File
+import java.io.FileOutputStream
 
 @Composable
 fun CameraScanScreen(
     onBackClick: () -> Unit,
-    onImageCaptured: (avgR: Int, avgG: Int, avgB: Int) -> Unit,
-    onGalleryClick: () -> Unit
+    onImageCaptured: (imageUriString: String) -> Unit,
+    onGalleryClick: (imageUriString: String) -> Unit
 ) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
@@ -69,6 +74,14 @@ fun CameraScanScreen(
         hasCameraPermission = isGranted
     }
 
+    val galleryLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri: Uri? ->
+        if (uri != null) {
+            onGalleryClick(uri.toString())
+        }
+    }
+
     LaunchedEffect(Unit) {
         if (!hasCameraPermission) {
             permissionLauncher.launch(Manifest.permission.CAMERA)
@@ -76,6 +89,7 @@ fun CameraScanScreen(
     }
 
     var isFlashOn by remember { mutableStateOf(false) }
+    var isCapturing by remember { mutableStateOf(false) }
     val imageCapture = remember { ImageCapture.Builder().build() }
 
     Box(modifier = Modifier.fillMaxSize().background(Color.Black)) {
@@ -208,18 +222,31 @@ fun CameraScanScreen(
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(6.dp)
                         ) {
-                            Icon(
-                                imageVector = Icons.Filled.Info,
-                                contentDescription = "Info",
-                                tint = Color(0xFF81C784),
-                                modifier = Modifier.size(16.dp)
-                            )
-                            Text(
-                                text = "Hold steady in good lighting",
-                                color = TextLightPrimary,
-                                fontSize = 14.sp,
-                                fontWeight = FontWeight.Medium
-                            )
+                            if (isCapturing) {
+                                CircularProgressIndicator(
+                                    modifier = Modifier.size(16.dp),
+                                    color = Color(0xFF81C784),
+                                    strokeWidth = 2.dp
+                                )
+                                Text(
+                                    text = "Capturing and analyzing...",
+                                    color = TextLightPrimary,
+                                    fontSize = 14.sp
+                                )
+                            } else {
+                                Icon(
+                                    imageVector = Icons.Filled.Info,
+                                    contentDescription = "Info",
+                                    tint = Color(0xFF81C784),
+                                    modifier = Modifier.size(16.dp)
+                                )
+                                Text(
+                                    text = "Hold steady in good lighting",
+                                    color = TextLightPrimary,
+                                    fontSize = 14.sp,
+                                    fontWeight = FontWeight.Medium
+                                )
+                            }
                         }
                     }
                 }
@@ -239,7 +266,9 @@ fun CameraScanScreen(
                     ) {
                         // Gallery Button
                         OutlinedButton(
-                            onClick = onGalleryClick,
+                            onClick = {
+                                galleryLauncher.launch("image/*")
+                            },
                             border = BorderStroke(1.5.dp, Color(0xFF1D5C3A)),
                             colors = ButtonDefaults.outlinedButtonColors(contentColor = Color(0xFF1D5C3A)),
                             shape = RoundedCornerShape(12.dp),
@@ -261,14 +290,36 @@ fun CameraScanScreen(
                                 .border(4.dp, Color(0xFF1D5C3A), CircleShape)
                                 .padding(6.dp)
                                 .background(Color(0xFFD32F2F), CircleShape)
-                                .clickable {
-                                    val choice = Random.nextInt(4)
-                                    when (choice) {
-                                        0 -> onImageCaptured(40, 160, 40)  // Green -> Healthy
-                                        1 -> onImageCaptured(160, 110, 40) // Yellowish -> Bacterial Blight
-                                        2 -> onImageCaptured(130, 80, 40)  // Brownish -> Brown Spot
-                                        else -> onImageCaptured(10, 10, 10)   // Dark -> Out of Scope
-                                    }
+                                .clickable(enabled = !isCapturing) {
+                                    isCapturing = true
+                                    val executor = ContextCompat.getMainExecutor(context)
+                                    imageCapture.takePicture(
+                                        executor,
+                                        object : ImageCapture.OnImageCapturedCallback() {
+                                            override fun onCaptureSuccess(imageProxy: ImageProxy) {
+                                                try {
+                                                    val bitmap = imageProxy.toBitmap()
+                                                    imageProxy.close()
+
+                                                    val cacheFile = File(context.cacheDir, "captured_leaf_${System.currentTimeMillis()}.jpg")
+                                                    FileOutputStream(cacheFile).use { out ->
+                                                        bitmap.compress(Bitmap.CompressFormat.JPEG, 90, out)
+                                                    }
+                                                    isCapturing = false
+                                                    onImageCaptured(Uri.fromFile(cacheFile).toString())
+                                                } catch (e: Exception) {
+                                                    Log.e("CameraScanScreen", "Failed to process captured frame", e)
+                                                    isCapturing = false
+                                                    imageProxy.close()
+                                                }
+                                            }
+
+                                            override fun onError(exception: ImageCaptureException) {
+                                                Log.e("CameraScanScreen", "Image capture failed", exception)
+                                                isCapturing = false
+                                            }
+                                        }
+                                    )
                                 }
                         )
                     }

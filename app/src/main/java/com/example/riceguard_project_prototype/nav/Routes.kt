@@ -26,8 +26,9 @@ data object RouteCameraScan : NavKey
 
 @Serializable
 data class RouteResult(
-    val avgR: Int,
-    val avgG: Int,
-    val avgB: Int,
-    val isFromGallery: Boolean = false
+    val avgR: Int = 0,
+    val avgG: Int = 0,
+    val avgB: Int = 0,
+    val isFromGallery: Boolean = false,
+    val imageUriString: String? = null
 ) : NavKey

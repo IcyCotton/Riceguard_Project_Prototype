@@ -48,8 +48,8 @@ class MainActivity : ComponentActivity() {
                         entry<RouteScanHome> {
                             ScanHomeScreen(
                                 onTakeExternalPhotoClick = { navigator.navigate(RouteCameraScan) },
-                                onUploadFromGalleryClick = { r, g, b ->
-                                    navigator.navigate(RouteResult(r, g, b, isFromGallery = true))
+                                onUploadFromGalleryClick = { uriString ->
+                                    navigator.navigate(RouteResult(isFromGallery = true, imageUriString = uriString))
                                 },
                                 onDashboardClick = { navigator.navigate(RouteDashboard) }
                             )
@@ -76,11 +76,11 @@ class MainActivity : ComponentActivity() {
                         entry<RouteCameraScan> {
                             CameraScanScreen(
                                 onBackClick = { navigator.goBack() },
-                                onImageCaptured = { r, g, b ->
-                                    navigator.navigate(RouteResult(r, g, b, isFromGallery = false))
+                                onImageCaptured = { uriString ->
+                                    navigator.navigate(RouteResult(isFromGallery = false, imageUriString = uriString))
                                 },
-                                onGalleryClick = {
-                                    navigator.navigate(RouteResult(130, 80, 40, isFromGallery = true))
+                                onGalleryClick = { uriString ->
+                                    navigator.navigate(RouteResult(isFromGallery = true, imageUriString = uriString))
                                 }
                             )
                         }
@@ -90,6 +90,7 @@ class MainActivity : ComponentActivity() {
                                 avgG = key.avgG,
                                 avgB = key.avgB,
                                 isFromGallery = key.isFromGallery,
+                                imageUriString = key.imageUriString,
                                 onScanAnotherClick = {
                                     val currentStack = navigator.state.backStacks[navigator.state.topLevelRoute]
                                     if (currentStack != null && currentStack.contains(RouteCameraScan)) {

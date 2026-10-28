@@ -1,5 +1,8 @@
 package com.example.riceguard_project_prototype.ui
 
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -34,12 +37,20 @@ import com.example.riceguard_project_prototype.ui.theme.TextLightSecondary
 @Composable
 fun ScanHomeScreen(
     onTakeExternalPhotoClick: () -> Unit,
-    onUploadFromGalleryClick: (avgR: Int, avgG: Int, avgB: Int) -> Unit,
+    onUploadFromGalleryClick: (uriString: String) -> Unit,
     onDashboardClick: () -> Unit
 ) {
     val context = LocalContext.current
     val datasetManager = remember { DatasetManager(context) }
     val metadata = remember { datasetManager.getDatasetMetadata() }
+
+    val galleryLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri: Uri? ->
+        if (uri != null) {
+            onUploadFromGalleryClick(uri.toString())
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -88,7 +99,7 @@ fun ScanHomeScreen(
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(200.dp),
+                    .height(180.dp),
                 shape = RoundedCornerShape(24.dp),
                 colors = CardDefaults.cardColors(containerColor = Color(0xFF1D5C3A))
             ) {
@@ -232,29 +243,7 @@ fun ScanHomeScreen(
 
             OutlinedButton(
                 onClick = { 
-                    // Select a real dataset sample image from dataset
-                    val sample = datasetManager.getRandomSampleItem()
-                    if (sample != null) {
-                        val bitmap = sample.bitmap
-                        var totalR = 0L
-                        var totalG = 0L
-                        var totalB = 0L
-                        val sampleSize = 100
-                        for (i in 0 until sampleSize) {
-                            val x = (i * 17) % bitmap.width
-                            val y = (i * 23) % bitmap.height
-                            val pixel = bitmap.getPixel(x, y)
-                            totalR += (pixel shr 16) and 0xFF
-                            totalG += (pixel shr 8) and 0xFF
-                            totalB += pixel and 0xFF
-                        }
-                        val avgR = (totalR / sampleSize).toInt()
-                        val avgG = (totalG / sampleSize).toInt()
-                        val avgB = (totalB / sampleSize).toInt()
-                        onUploadFromGalleryClick(avgR, avgG, avgB)
-                    } else {
-                        onUploadFromGalleryClick(150, 120, 60)
-                    }
+                    galleryLauncher.launch("image/*")
                 },
                 modifier = Modifier
                     .fillMaxWidth()
@@ -275,7 +264,7 @@ fun ScanHomeScreen(
                         tint = Color(0xFF1D5C3A)
                     )
                     Text(
-                        text = "Upload Dataset Sample",
+                        text = "Upload from Gallery",
                         fontSize = 16.sp,
                         fontWeight = FontWeight.Bold,
                         color = Color(0xFF1D5C3A)
@@ -311,7 +300,7 @@ fun ScanHomeScreenPreview() {
     Riceguard_Project_PrototypeTheme {
         ScanHomeScreen(
             onTakeExternalPhotoClick = {},
-            onUploadFromGalleryClick = { _, _, _ -> },
+            onUploadFromGalleryClick = { _ -> },
             onDashboardClick = {}
         )
     }

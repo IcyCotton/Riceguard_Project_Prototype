@@ -1,6 +1,9 @@
 package com.example.riceguard_project_prototype.ui
 
 import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.net.Uri
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -16,6 +19,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
@@ -34,16 +39,35 @@ fun ClassificationResultScreen(
     avgG: Int,
     avgB: Int,
     isFromGallery: Boolean,
+    imageUriString: String? = null,
     onScanAnotherClick: () -> Unit,
     onBackClick: () -> Unit
 ) {
     val context = LocalContext.current
     val inferenceEngine = remember { CNNInferenceEngine(context) }
 
-    val bitmap = remember(avgR, avgG, avgB) {
-        val bmp = Bitmap.createBitmap(224, 224, Bitmap.Config.ARGB_8888)
-        bmp.eraseColor(android.graphics.Color.rgb(avgR, avgG, avgB))
-        bmp
+    val bitmap = remember(imageUriString, avgR, avgG, avgB) {
+        if (!imageUriString.isNullOrBlank()) {
+            try {
+                val uri = Uri.parse(imageUriString)
+                val inputStream = context.contentResolver.openInputStream(uri)
+                val decoded = BitmapFactory.decodeStream(inputStream)
+                inputStream?.close()
+                decoded ?: run {
+                    val bmp = Bitmap.createBitmap(224, 224, Bitmap.Config.ARGB_8888)
+                    bmp.eraseColor(android.graphics.Color.rgb(avgR, avgG, avgB))
+                    bmp
+                }
+            } catch (e: Exception) {
+                val bmp = Bitmap.createBitmap(224, 224, Bitmap.Config.ARGB_8888)
+                bmp.eraseColor(android.graphics.Color.rgb(avgR, avgG, avgB))
+                bmp
+            }
+        } else {
+            val bmp = Bitmap.createBitmap(224, 224, Bitmap.Config.ARGB_8888)
+            bmp.eraseColor(android.graphics.Color.rgb(avgR, avgG, avgB))
+            bmp
+        }
     }
 
     val classificationResults = remember(bitmap) {
@@ -79,6 +103,25 @@ fun ClassificationResultScreen(
             verticalArrangement = Arrangement.spacedBy(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
+            // Optional image preview if available
+            if (!imageUriString.isNullOrBlank() && bitmap != null) {
+                item {
+                    Card(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(200.dp),
+                        shape = RoundedCornerShape(16.dp)
+                    ) {
+                        Image(
+                            bitmap = bitmap.asImageBitmap(),
+                            contentDescription = "Selected Leaf / Image Preview",
+                            modifier = Modifier.fillMaxSize(),
+                            contentScale = ContentScale.Crop
+                        )
+                    }
+                }
+            }
+
             // Main Summary Card
             item {
                 Card(
