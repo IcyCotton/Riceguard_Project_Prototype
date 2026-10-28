@@ -2,6 +2,7 @@ package com.example.riceguard_project_prototype.ml
 
 import android.graphics.Bitmap
 import android.graphics.Color
+import android.util.Log
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.example.riceguard_project_prototype.data.dataset.DatasetManager
@@ -82,5 +83,66 @@ class RiceGuardMLTest {
         val classificationResults = engine.classifyLeaf(sampleItem.bitmap)
         assertNotNull(classificationResults)
         assertTrue(classificationResults.isNotEmpty())
+    }
+
+    @Test
+    fun testModelAccuracyAcrossAllDatasetSamples() {
+        val appContext = InstrumentationRegistry.getInstrumentation().targetContext
+        val datasetManager = DatasetManager(appContext)
+        val samples = datasetManager.getAllSampleItems()
+
+        Log.d("RiceGuardMLTest", "=== TESTING TFLITE MODEL ACCURACY ACROSS ALL DATASET SAMPLES ===")
+        val engine = CNNInferenceEngine(appContext)
+
+        for (sample in samples) {
+            val results = engine.classifyLeaf(sample.bitmap)
+            val topResult = results.firstOrNull()
+            Log.d("RiceGuardMLTest", "Expected Category: [${sample.categoryDisplayName}] | Path: ${sample.assetPath} -> Predicted: ${topResult?.className} (${String.format("%.2f%%", (topResult?.confidence ?: 0f) * 100)})")
+        }
+    }
+
+    @Test
+    fun testDetailedRawInferenceAndConfusionMatrix() {
+        val appContext = InstrumentationRegistry.getInstrumentation().targetContext
+        val datasetManager = DatasetManager(appContext)
+        val samples = datasetManager.getAllSampleItems()
+
+        // 5 Disease categories in dataset matching exact display names:
+        val categoryDisplayNames = listOf("Bacterial Blight", "Blast", "Brown Spot", "Healthy", "Tungro")
+        val confusionMatrix = Array(5) { IntArray(5) } // Row = Expected, Col = Predicted
+
+        Log.d("RiceGuardMLTest", "=== DETAILED RAW MODEL INFERENCE LOGS ===")
+        val engine = CNNInferenceEngine(appContext)
+
+        for (sample in samples) {
+            // Engine's actual public output (exact same path the UI uses!)
+            val results = engine.classifyLeaf(sample.bitmap)
+            val top1 = results.firstOrNull()
+            val top2 = results.getOrNull(1)
+
+            val expectedCategory = sample.categoryDisplayName
+
+            // Take predicted label directly from the engine's public output className!
+            val predictedCategory = top1?.className ?: "Unknown"
+
+            val expectedIndex = categoryDisplayNames.indexOf(expectedCategory)
+            val predictedIndex = categoryDisplayNames.indexOf(predictedCategory)
+
+            if (expectedIndex in 0..4 && predictedIndex in 0..4) {
+                confusionMatrix[expectedIndex][predictedIndex]++
+            }
+
+            Log.d(
+                "RiceGuardMLTest",
+                "Sample [Expected: $expectedCategory] -> Engine Public Output Top-1: $predictedCategory (${String.format("%.1f%%", (top1?.confidence ?: 0f) * 100)}) | Top-2: ${top2?.className} (${String.format("%.1f%%", (top2?.confidence ?: 0f) * 100)}) | Path: ${sample.assetPath}"
+            )
+        }
+
+        Log.d("RiceGuardMLTest", "=== CONFUSION MATRIX (Rows: Expected, Cols: Predicted) ===")
+        Log.d("RiceGuardMLTest", "Expected \\ Predicted | Bacterial Blight | Blast | Brown Spot | Healthy | Tungro")
+        for (i in 0..4) {
+            val rowStr = categoryDisplayNames[i].padEnd(18) + " | " + confusionMatrix[i].joinToString(" | ") { it.toString().padStart(5) }
+            Log.d("RiceGuardMLTest", rowStr)
+        }
     }
 }
