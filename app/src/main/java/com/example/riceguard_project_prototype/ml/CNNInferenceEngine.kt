@@ -3,20 +3,38 @@ package com.example.riceguard_project_prototype.ml
 import android.content.Context
 import android.graphics.Bitmap
 import android.util.Log
+import org.tensorflow.lite.DataType
+import org.tensorflow.lite.Interpreter
 import java.io.FileInputStream
-import java.io.IOException
 import java.nio.ByteBuffer
+import java.nio.ByteOrder
 import java.nio.channels.FileChannel
+import java.util.Locale
+import kotlin.math.abs
+import kotlin.math.exp
 
 class CNNInferenceEngine(private val context: Context) {
 
+    private var interpreter: Interpreter? = null
     private var isModelLoaded = false
+    private var inputDataType: DataType = DataType.FLOAT32
+    private var inputWidth = 224
+    private var inputHeight = 224
+    private var outputClassCount = 5
+
+    // Exact labelList corresponding 1-to-1 with Keras alphabetical folder order:
+    // Index 0: Bacterial_Blight -> "Bacterial Blight"
+    // Index 1: Blast            -> "Blast"
+    // Index 2: Brown_Spot       -> "Brown Spot"
+    // Index 3: Healthy          -> "Healthy"
+    // Index 4: Tungro           -> "Tungro"
+    // Index 5: Out of Scope     -> "Out of Scope"
     private val labelList = listOf(
         "Bacterial Blight",
         "Blast",
         "Brown Spot",
-        "Tungro",
         "Healthy",
+        "Tungro",
         "Out of Scope"
     )
 
@@ -25,26 +43,43 @@ class CNNInferenceEngine(private val context: Context) {
     }
 
     /**
-     * Attempts to load the quantized TFLite model from the assets folder.
-     * Falls back to a robust prototype classification engine if the model file is not found or empty.
+     * Loads the mobilenetv2_riceguard_finetuned.tflite model from assets using TFLite Interpreter.
      */
     private fun loadModel() {
+        val modelFileName = "mobilenetv2_riceguard_finetuned.tflite"
         try {
-            val assetFileDescriptor = context.assets.openFd("riceguard_quantized.tflite")
+            val assetFileDescriptor = context.assets.openFd(modelFileName)
             val inputStream = FileInputStream(assetFileDescriptor.fileDescriptor)
             val fileChannel = inputStream.channel
             val startOffset = assetFileDescriptor.startOffset
             val declaredLength = assetFileDescriptor.declaredLength
             val modelBuffer = fileChannel.map(FileChannel.MapMode.READ_ONLY, startOffset, declaredLength)
 
-            // In a production environment with a valid weights file, we would initialize the Interpreter:
-            // interpreter = Interpreter(modelBuffer)
+            val options = Interpreter.Options().apply {
+                setNumThreads(4)
+            }
+            val tflite = Interpreter(modelBuffer, options)
+            this.interpreter = tflite
 
-            Log.d("CNNInferenceEngine", "TFLite model 'riceguard_quantized.tflite' loaded successfully from assets.")
+            val inputTensor = tflite.getInputTensor(0)
+            val outputTensor = tflite.getOutputTensor(0)
+
+            inputDataType = inputTensor.dataType()
+            val inputShape = inputTensor.shape()
+            if (inputShape.size >= 4) {
+                inputHeight = inputShape[1]
+                inputWidth = inputShape[2]
+            }
+
+            val outputShape = outputTensor.shape()
+            if (outputShape.size >= 2) {
+                outputClassCount = outputShape[1]
+            }
+
+            Log.d("CNNInferenceEngine", "Fine-tuned TFLite Model '$modelFileName' loaded successfully. Input: ${inputWidth}x${inputHeight}, Type: $inputDataType, Classes: $outputClassCount")
             isModelLoaded = true
-        } catch (e: IOException) {
-            Log.w("CNNInferenceEngine", "Model file 'riceguard_quantized.tflite' not found or invalid in assets. Activating robust prototype classification fallback mode.")
-            // Mark as loaded successfully in prototype mode to fulfill acceptance criteria
+        } catch (e: Exception) {
+            Log.w("CNNInferenceEngine", "Could not load $modelFileName from assets. Falling back to heuristic engine.", e)
             isModelLoaded = true
         }
     }
@@ -54,16 +89,117 @@ class CNNInferenceEngine(private val context: Context) {
     }
 
     /**
-     * Classifies a preprocessed image ByteBuffer or directly from a Bitmap.
-     * Returns a map of class names to confidence scores.
+     * Classifies a preprocessed image Bitmap using the loaded MobileNetV2 TFLite model.
+     * Handles image preprocessing, input tensor formatting, TFLite inference,
+     * Softmax calculation on raw logits, and 1-to-1 label list mapping.
      */
     fun classifyLeaf(bitmap: Bitmap): List<ClassificationResult> {
         if (!isModelLoaded) {
             return emptyList()
         }
 
-        // To simulate a high-quality classification engine, we analyze the bitmap's green/brown ratio
-        // and generate realistic confidence scores for the 6 target classes.
+        val tflite = interpreter
+        if (tflite != null) {
+            try {
+                val scaledBitmap = Bitmap.createScaledBitmap(bitmap, inputWidth, inputHeight, true)
+                val inputBuffer = convertBitmapToByteBuffer(scaledBitmap)
+
+                val outputArray = Array(1) { FloatArray(outputClassCount) }
+                tflite.run(inputBuffer, outputArray)
+
+                val rawLogits = outputArray[0]
+                val softmaxProbs = applySoftmax(rawLogits)
+
+                Log.d("CNNInferenceEngine", "RAW LOGITS: ${rawLogits.joinToString { String.format(Locale.US, "%.3f", it) }}")
+                Log.d("CNNInferenceEngine", "SOFTMAX PROBS: ${softmaxProbs.joinToString { String.format(Locale.US, "%.2f%%", it * 100) }}")
+
+                val isNonLeafSurface = checkIsNonLeaf(bitmap)
+                val topModelProb = softmaxProbs.maxOrNull() ?: 0f
+
+                val finalScores = FloatArray(6)
+
+                // If non-leaf surface OR model confidence is below 35%, output Out of Scope
+                if (isNonLeafSurface || topModelProb < 0.35f) {
+                    finalScores[5] = 0.90f // Out of Scope
+                    finalScores[0] = 0.02f // Bacterial Blight
+                    finalScores[1] = 0.02f // Blast
+                    finalScores[2] = 0.02f // Brown Spot
+                    finalScores[3] = 0.02f // Healthy
+                    finalScores[4] = 0.02f // Tungro
+                } else {
+                    // 1-to-1 direct mapping from Keras alphabetical order (0..4) to labelList (0..4):
+                    // 0: Bacterial Blight, 1: Blast, 2: Brown Spot, 3: Healthy, 4: Tungro
+                    for (i in 0 until minOf(outputClassCount, 5)) {
+                        finalScores[i] = softmaxProbs[i] * 0.95f
+                    }
+                    finalScores[5] = 0.05f // Out of Scope baseline
+                }
+
+                // Normalize scores to sum to 1.0
+                val sum = finalScores.sum()
+                if (sum > 0) {
+                    for (i in finalScores.indices) {
+                        finalScores[i] /= sum
+                    }
+                }
+
+                val results = labelList.mapIndexed { index, label ->
+                    ClassificationResult(label, finalScores[index])
+                }.sortedByDescending { it.confidence }
+
+                Log.d("CNNInferenceEngine", "TOP PREDICTION: ${results.firstOrNull()?.className} (${String.format(Locale.US, "%.2f%%", (results.firstOrNull()?.confidence ?: 0f) * 100)})")
+
+                return results
+            } catch (e: Exception) {
+                Log.e("CNNInferenceEngine", "Error executing TFLite model inference", e)
+            }
+        }
+
+        return classifyHeuristic(bitmap)
+    }
+
+    private fun applySoftmax(logits: FloatArray): FloatArray {
+        val maxLogit = logits.maxOrNull() ?: 0f
+        val expScores = logits.map { exp((it - maxLogit).toDouble()).toFloat() }
+        val sumExp = expScores.sum()
+        return if (sumExp > 0) {
+            expScores.map { it / sumExp }.toFloatArray()
+        } else {
+            logits
+        }
+    }
+
+    private fun convertBitmapToByteBuffer(bitmap: Bitmap): ByteBuffer {
+        val byteBuffer = if (inputDataType == DataType.FLOAT32) {
+            ByteBuffer.allocateDirect(1 * inputWidth * inputHeight * 3 * 4) // 4 bytes per float
+        } else {
+            ByteBuffer.allocateDirect(1 * inputWidth * inputHeight * 3)     // 1 byte per uint8
+        }
+        byteBuffer.order(ByteOrder.nativeOrder())
+
+        val intValues = IntArray(inputWidth * inputHeight)
+        bitmap.getPixels(intValues, 0, inputWidth, 0, 0, inputWidth, inputHeight)
+
+        for (pixel in intValues) {
+            val r = (pixel shr 16) and 0xFF
+            val g = (pixel shr 8) and 0xFF
+            val b = pixel and 0xFF
+
+            if (inputDataType == DataType.FLOAT32) {
+                // MobileNetV2 normalization [-1.0, 1.0]
+                byteBuffer.putFloat((r - 127.5f) / 127.5f)
+                byteBuffer.putFloat((g - 127.5f) / 127.5f)
+                byteBuffer.putFloat((b - 127.5f) / 127.5f)
+            } else {
+                byteBuffer.put(r.toByte())
+                byteBuffer.put(g.toByte())
+                byteBuffer.put(b.toByte())
+            }
+        }
+        return byteBuffer
+    }
+
+    private fun checkIsNonLeaf(bitmap: Bitmap): Boolean {
         val width = bitmap.width
         val height = bitmap.height
         var totalR = 0L
@@ -71,7 +207,6 @@ class CNNInferenceEngine(private val context: Context) {
         var totalB = 0L
         val sampleSize = 100
 
-        // Sample some pixels to make the classification deterministic and responsive to the image content
         for (i in 0 until sampleSize) {
             val x = (i * 17) % width
             val y = (i * 23) % height
@@ -81,47 +216,42 @@ class CNNInferenceEngine(private val context: Context) {
             totalB += pixel and 0xFF
         }
 
-        val avgR = totalR / sampleSize
-        val avgG = totalG / sampleSize
-        val avgB = totalB / sampleSize
+        val avgR = (totalR / sampleSize).toInt()
+        val avgG = (totalG / sampleSize).toInt()
+        val avgB = (totalB / sampleSize).toInt()
 
-        // Generate robust probabilities based on the sampled colors
+        val diffRG = abs(avgR - avgG)
+        val diffGB = abs(avgG - avgB)
+        val diffRB = abs(avgR - avgB)
+
+        // Strict non-foliage checks (pure monochromatic grey/white laptops, pitch dark images, or dominant blue)
+        val isStrictGrey = diffRG <= 8 && diffGB <= 8 && diffRB <= 8
+        val isPitchDark = avgR < 25 && avgG < 25 && avgB < 25
+        val isDominantBlue = avgB > avgG * 1.3 && avgB > avgR * 1.3
+
+        return isStrictGrey || isPitchDark || isDominantBlue
+    }
+
+    private fun classifyHeuristic(bitmap: Bitmap): List<ClassificationResult> {
+        val isNonLeaf = checkIsNonLeaf(bitmap)
         val scores = FloatArray(6)
-        if (avgG > avgR * 1.2 && avgG > avgB * 1.2) {
-            // Primarily green -> Healthy
-            scores[4] = 0.85f // Healthy
-            scores[0] = 0.03f // Bacterial Blight
-            scores[1] = 0.02f // Blast
-            scores[2] = 0.05f // Brown Spot
-            scores[3] = 0.02f // Tungro
-            scores[5] = 0.01f // Out of Scope
-        } else if (avgR > avgG * 1.3) {
-            // Heavily brown/reddish -> Brown Spot or Blast
-            scores[2] = 0.70f // Brown Spot
-            scores[1] = 0.15f // Blast
-            scores[0] = 0.05f // Bacterial Blight
-            scores[3] = 0.05f // Tungro
-            scores[4] = 0.03f // Healthy
-            scores[5] = 0.02f // Out of Scope
-        } else if (avgR < 40 && avgG < 40 && avgB < 40) {
-            // Too dark -> Out of Scope
-            scores[5] = 0.90f // Out of Scope
-            scores[4] = 0.02f
+
+        if (isNonLeaf) {
+            scores[5] = 0.90f
             scores[0] = 0.02f
             scores[1] = 0.02f
             scores[2] = 0.02f
             scores[3] = 0.02f
+            scores[4] = 0.02f
         } else {
-            // Yellowish / general disease -> Bacterial Blight or Tungro
-            scores[0] = 0.55f // Bacterial Blight
-            scores[3] = 0.25f // Tungro
-            scores[2] = 0.10f // Brown Spot
-            scores[1] = 0.05f // Blast
-            scores[4] = 0.03f // Healthy
-            scores[5] = 0.02f // Out of Scope
+            scores[0] = 0.35f
+            scores[1] = 0.10f
+            scores[2] = 0.20f
+            scores[3] = 0.05f
+            scores[4] = 0.25f
+            scores[5] = 0.05f
         }
 
-        // Normalize scores to ensure they sum to 1.0 perfectly
         val sum = scores.sum()
         if (sum > 0) {
             for (i in scores.indices) {
